@@ -23,6 +23,7 @@
 - 2-14. Redo log Group 내 모든 member 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/2-14%20Redo%20log%20Group%20%EB%82%B4%20%EB%AA%A8%EB%93%A0%20member%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
 
 ### 3. 사용자 관리 불완전 복구
+- 완전 복구 vs 불완전 복구 : [설명]
 - 3-1. Time base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-1.%20Time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
 - 3-2. Cancel base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-2.%20Cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
 - 3-3. 모든 Redo log file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-3.%20%EB%AA%A8%EB%93%A0%20Redo%20log%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
@@ -34,21 +35,21 @@
 - 4-3. RMAN Tablespace Backup : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/4-3.%20RMAN%20Tablespace%20Backup.txt)
 
 ### 5. RMAN recovery
-- 5-1. RMAN Non system data file 삭제&복구(DB open 상태) : [CODE]
-- 5-2. RMAN System data file 삭제&복구 : [CODE]
-- 5-3. RMAN 모든 Data file 삭제&복구 : [CODE]
-- 5-4. RMAN 모든 Control file 삭제&복구 : [CODE]
-- 5-5. RMAN 모든 Data file, Control file 삭제&복구 : [CODE]
-- 5-6. RMAN Parameter file 삭제&복구 : [CODE]
-- 5-7. RMAN Time base 불완전 복구 : [CODE]
-- 5-8. RMAN Cancel base 불완전 복구 : [CODE]
-- 5-9. RMAN 사용하지 않고 백업본 없을 때 복구 방법 : [CODE]
-- 5-10 RMAN 백업본 없을 때 복구 방법 : [CODE]
+- 5-1. RMAN Non system data file 삭제&복구(DB open 상태) : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-1.%20RMAN%20Non%20system%20data%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC(DB%20open%20%EC%83%81%ED%83%9C).txt)
+- 5-2. RMAN System data file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-2.%20RMAN%20System%20data%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
+- 5-3. RMAN 모든 Data file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-3.%20RMAN%20%EB%AA%A8%EB%93%A0%20Data%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
+- 5-4. RMAN 모든 Control file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-4.%20RMAN%20%EB%AA%A8%EB%93%A0%20Control%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
+- 5-5. RMAN 모든 Data file, Control file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-5.%20RMAN%20%EB%AA%A8%EB%93%A0%20Data%20file%2C%20Control%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
+- 5-6. RMAN Parameter file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-6.%20RMAN%20Parameter%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
+- 5-7. RMAN Time base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-7.%20RMAN%20Time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
+- 5-8. RMAN Cancel base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-8.%20RMAN%20Cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
+- 5-9. RMAN 사용하지 않고 백업본 없을 때 복구 방법 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-9.%20RMAN%20%EC%82%AC%EC%9A%A9%ED%95%98%EC%A7%80%20%EC%95%8A%EA%B3%A0%20%EB%B0%B1%EC%97%85%EB%B3%B8%20%EC%97%86%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt)
+- 5-10 RMAN 백업본 없을 때 복구 방법 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-10%20RMAN%20%EB%B0%B1%EC%97%85%EB%B3%B8%20%EC%97%86%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt)
 
 ### 6. Recovery catalog 를 통한 Backup&Recovery
 - 6-1. Recorery catalog 구성하기 : [CODE]
 - 6-2. Recorery catalog 를 별도의 DB 에 구성하기 : [CODE]
-- 6-3. Recorery catalog 에서 사용가능한 RMAN 명령어 : [CODE]
+- 6-3. Recorery catalog 를 통해 사용가능한 RMAN 명령어 : [CODE]
 - 6-4. Recorery catalog 에서 불완전 복구 : [CODE]
 - 6-5. 복구 관리자 사용하기 : [CODE]
 
