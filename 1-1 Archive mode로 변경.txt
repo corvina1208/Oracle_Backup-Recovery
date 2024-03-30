@@ -1,0 +1,57 @@
+■ DB 모드를 Archive Mode 로 변경
+
+#1. DB 모드를 확인한다.
+
+SYS> archive log list
+
+#2. DB 를 정상 종료한다.
+
+SYS> shutdown immediate
+
+#3. DB 를 Mount 상태로 올린다.
+
+SYS> startup mount
+
+#4. Archive Mode 로 변경한다.
+
+SYS> alter database archivelog;
+
+#5. DB 를 Open 단계로 올린다.
+
+SYS> alter database open;
+
+#6. Archive Mode 로 변경되었는지 확인한다.
+
+SYS> archive log list
+
+
+
+
+
+■ DB 모드를 No Archive Mode 로 변환하기
+
+#1. DB 모드를 확인한다.
+
+SYS> archive log list
+
+#2. DB 를 정상 종료한다.
+
+SYS> shutdown immediate
+
+#3. DB 를 Mount 상태로 올린다.
+
+SYS> startup mount
+
+#4. No Archive Mode 로 변경한다.
+
+SYS> alter database noarchivelog;
+
+#5. DB 를 open 단계로 올린다.
+
+SYS> alter database open;
+
+#6. No Archive Mode 로 변경되었는지 확인한다.
+
+SYS> archive log list
+
+
