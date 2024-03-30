@@ -1,0 +1,51 @@
+■ Control file 삭제&복구 (text 파일로 복구)
+
+#1. controlfile 을 binary 형태로 백업한다.
+#2. controlfile 을 text 형태로 백업한다.
+#3. shutdown abort 로 DB 내리기
+#4. controlfile 1개 삭제
+#5. startup
+#6. 백업받은 control file 생성 스크립트로 생성 후 DB 올리기
+
+-- 구현
+
+#1. controlfile 을 binary 형태로 백업한다.
+
+SYS > alter database backup controlfile to '/home/oracle/hot_20240304/control01.bak';
+
+#2. controlfile 을 text 형태로 백업한다.
+
+SYS > alter database backup controlfile to trace 
+         as '/home/oracle/hot_20240304/create_controlfile.sql';
+-- 편집
+
+#3. shutdown abort 로 DB 내리기
+
+SYS > select name from v$controlfile;
+-- 경로 확인 : /u01/app/oracle/oradata/jsj/control01.ctl
+
+SYS > shutdown abort
+
+#4. controlfile 1개 삭제
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+$ rm control01.ctl 
+
+#5. startup
+
+SYS > startup
+
+#6. 백업받은 control file 생성 스크립트로 생성 후 DB 올리기
+
+SYS > @/home/oracle/hot_20240304/create_controlfile.sql
+SYS > select status from v$instance;
+-- status : OPEN 확인
+
+-- controlfile 이 만들어졌는지 확인
+
+SYS > select name from v$controlfile;
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+
