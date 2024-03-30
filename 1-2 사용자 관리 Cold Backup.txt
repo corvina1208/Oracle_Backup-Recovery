@@ -1,0 +1,51 @@
+■  사용자 관리 Cold Backup
+
+- 순서:
+#1. data file 위치 확인
+#2. controlfile 위치 확인
+#3. redo log file 위치 확인
+#4. coldbackup 폴더 생성
+#5. DB 정상 종료
+#6. 원본 data file, control file, redo log file 백업
+#7. 백업이 잘 되었는지 확인
+#8. DB startup
+
+
+- 구현:
+#1. data file 위치 확인
+
+SYS> select file_name from dba_data_files;
+
+#2. controlfile 위치 확인
+
+SYS> select name from v$controlfile;
+
+#3. redo log file 위치 확인
+
+SYS> select group#, member
+         from v$logfile
+         order by group#;
+
+#4. coldbackup 폴더 생성
+
+$ cd
+$ mkdir coldbackup
+
+#5. DB 정상 종료
+
+SYS> shutdown immediate
+
+#6. 원본 data file, control file, redo log file 백업
+
+$ cd /u01/app/oracle/oradata/jsj
+$ cp * /home/oracle/coldbackup/
+
+#7. 백업이 잘 되었는지 확인
+
+$ cd /home/oracle/coldbackup
+$ ls
+
+#8. DB startup
+
+SYS> startup
+
