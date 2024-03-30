@@ -1,0 +1,124 @@
+■ 모든 Data file 삭제&복구
+
+#1. hot backup 수행
+
+SYS > select ' alter   tablespace  ' || tablespace_name || ' begin  backup;'
+          from dba_tablespaces
+          where tablespace_name != 'TEMP';
+-- temp 는 삭제 시 재생성되므로 백업 할 필요 없음
+
+alter tablespace SYSTEM begin backup;
+alter tablespace SYSAUX begin backup;
+alter tablespace UNDOTBS1 begin backup;
+alter tablespace USERS begin backup;
+alter tablespace EXAMPLE begin backup;
+alter tablespace TS01 begin backup;
+alter tablespace TS02 begin backup;
+alter tablespace TS03 begin backup;
+
+SYS > select * from v$backup;
+-- status: ACTIVE
+
+#2. OS에서 data file 을 copy
+
+$ mkdir /home/oracle/hot_20240304
+
+SYS > select 'cp ' || file_name || ' /home/oracle/hot_20240304/'
+          from dba_data_files;
+
+$ cp /u01/app/oracle/oradata/jsj/ts01.dbf /home/oracle/hot_20240304/
+$ cp /u01/app/oracle/oradata/jsj/example01.dbf /home/oracle/hot_20240304/
+$ cp /u01/app/oracle/oradata/jsj/users01.dbf /home/oracle/hot_20240304/
+$ cp /u01/app/oracle/oradata/jsj/undotbs01.dbf /home/oracle/hot_20240304/
+$ cp /u01/app/oracle/oradata/jsj/sysaux01.dbf /home/oracle/hot_20240304/
+$ cp /u01/app/oracle/oradata/jsj/system01.dbf /home/oracle/hot_20240304/
+$ cp /u01/app/oracle/oradata/jsj/ts02.dbf /home/oracle/hot_20240304/
+$ cp /u01/app/oracle/oradata/jsj/ts03.dbf /home/oracle/hot_20240304/
+
+#3. end backup 수행
+
+SYS > select 'alter tablespace ' || tablespace_name || ' end backup;'
+          from dba_tablespaces
+          where tablespace_name != 'TEMP';
+
+alter tablespace SYSTEM end backup;
+alter tablespace SYSAUX end backup;
+alter tablespace UNDOTBS1 end backup;
+alter tablespace USERS end backup;
+alter tablespace EXAMPLE end backup;
+alter tablespace TS01 end backup;
+alter tablespace TS02 end backup;
+alter tablespace TS03 end backup;
+
+SYS > select * from v$backup;
+-- status: NOT ACTIVE
+
+#4. scott 유저에서 테이블 생성
+
+SCOTT > create table emp_coupang
+             tablespace ts01
+             as
+             select * from emp;
+
+#5. 데이터 입력 후 로그 스위치 여러 번 일으키기
+
+SCOTT > insert into emp_cuppang
+             select *
+             from emp_coupang;
+
+alter system switch logfile;
+alter system switch logfile;
+alter system switch logfile;
+
+#4. DB shutdown abort 후 모든 data file 삭제
+
+SYS > shutdown abort
+SYS > select file_name from dba_data_files;
+-- 위치 확인
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+$ rm *.dbf
+
+#5. DB startup
+
+SYS > startup
+ORA-01157: cannot identify/lock data file 1 - see DBWR trace file
+ORA-01110: data file 1: '/u01/app/oracle/oradata/jsj/system01.dbf'
+-- data file이 없어 mount 단계까지만 올라간다
+
+※ 복구해야 하는 파일들 확인하기
+select  r.file#, d.name
+from v$recover_file   r, v$datafile  d
+where  r.file# = d.file#
+and  error='FILE NOT FOUND';
+
+#6. 백업받은 파일들 복원하기
+
+$ cd hot_20240304
+$ cp *.dbf /u01/app/oracle/oradata/jsj/
+
+#7. 복원한 파일에 로그 파일을 적용해서 복구하기 (=완전복구)
+
+SYS > recover database;
+Specify log: {<RET>=suggested | filename | AUTO | CANCEL}
+auto
+-- auto 입력 시 아카이브 로그 파일을 복원한 파일에 적용한다
+
+#8. scott 유저에서 생성한 테이블을 조회 시도
+
+SYS > startup force
+
+SCOTT > select count(*) from emp_coupang;
+-- 조회 성공
+
+
+※ 정리 :
+모든 data file 들을 전부 삭제를 하는 장애가 발생했다.
+controfile 과 redo logfile 은 존재한다.
+이 경우, 백업받은 모든 data file 들을 복원 후 
+archive log file 과 최신 redo log file까지 적용하면 전부 복구된다.
+
+
+
+
