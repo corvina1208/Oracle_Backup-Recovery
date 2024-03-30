@@ -1,0 +1,44 @@
+■ Recorery catalog 를 별도의 DB 에 구성하기
+
+#1. orcl 의 sys 로 접속해 rc_ts 테이블 스페이스 생성하기
+#2. 유저 rc_user 를 생성하고 recovery_catalog_owner 권한을 부여한다
+#3. recovery catalog 를 생성한다
+#4. recovery catalog db 에 targer db 를 등록한다
+
+-- 구현
+
+#1. orcl 의 sys 로 접속해 rc_ts 테이블 스페이스 생성하기
+
+orcl(SYS) > create tablespace rc_ts datafile '+data' size 200m;
+
+#2. 유저 rc_user 를 생성하고 recovery_catalog_owner 권한을 부여한다
+
+orcl(SYS) > create user rc_user
+                identified by rc_user
+                default tablespace rc_ts;
+
+orcl(SYS) > grant recovery_catalog_owner to rc_user;
+orcl(SYS) > grant unlimited tablespace to rc_user;
+
+#3. recovery catalog 를 생성한다
+
+$ rman catalog rc_user/rc_user
+
+RMAN> create catalog tablespace rc_ts;
+
+#4. recovery catalog db 에 targer db 를 등록한다
+
+$ lsnrctl start
+$ lsnrctl status
+-- orcl, +ASM, jsj 가 떠야한다
+
+$ cd /u01/app/oracle/product/11.2.0/dbhome_1/network/admin
+$ ls -l tnsnames.ora
+-rw-r----- 1 oracle oinstall 1319  2월 20 17:09 tnsnames.ora
+-- tnsnames.ora 에 orcl 추가
+
+$ rman target sys/oracle@jsj catalog rc_user/rc_user@orcl
+
+RMAN> register database;
+
+
