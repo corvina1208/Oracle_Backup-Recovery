@@ -1,0 +1,90 @@
+■ 모든 Date file, Control file, Redo log file 삭제&복구
+
+모든 datafile / controlfile / redo logfile 이 전부 삭제되었다면
+current redo log file도 삭제된 상태다.
+월요일에 백업받은 data file 들과 control file 들을 모두 복원하고
+cancel base 불완전 복구 방법으로 복구를 시도한다.
+그런데 이 때, control file 도 백업받은 것을 가져왔으므로
+recover database using backup controlfile until cancel; 로 복구해야 한다.
+
+
+#1. cold backup
+#2. control file 생성하는 스크립트를 생성
+#3. shutdown abort
+#4. 모든 data file, control file, redo log file 삭제하기
+#5. startup
+#6. shutdown abort
+#7. 백업받은 data file 들과 control file 들을 복원
+#8. startup mount
+#9. cancel base 불완전 복구 시도
+#10. resetlogs 옵션으로 DB 올리기
+
+-- 구현
+
+#1. cold backup
+
+SYS > shutdown immediate
+
+$ mkdir coldbackup8
+$ cd /u01/app/oracle/oradata/jsj/
+$ cp * /home/oracle/coldbackup8/
+
+SYS > startup
+
+
+#2. control file 생성하는 스크립트를 생성
+※ 복구 실패하는 경우를 대비해 백업
+
+SYS > alter database backup controlfile to trace
+         as '/home/oracle/coldbackup8/create_controlfile.sql';
+
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+
+SYS > alter system checkpoint;
+
+#3. SYS > shutdown abort
+
+#4. 모든 data file, control file, redo log file 삭제하기
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+$ rm -rf *
+
+#5. SYS > startup
+ORA-00205: error in identifying control file, check alert log for more info
+-- parameter file 만 남아 nomount 상태에서 더는 올라가지 않는다
+
+#6. SYS > shutdown abort
+
+#7. 백업받은 data file 들과 control file 들을 복원
+
+$ cd /u01/app/oracle/oradata/jsj/
+
+$ cp /home/oracle/coldbackup8/.dbf .
+-- data file 복원
+$ cp /home/oracle/coldbackup8/.ctl .
+-- control file 복원
+
+$ ls
+
+#8. SYS > startup mount
+
+#9. cancel base 불완전 복구 시도
+
+SYS > recover database using backup controlfile until cancel;
+-- 끝까지 Enter 치다가 에러 나는 시퀀스 번호 확인 후 재시도
+
+SYS > recover database using backup controlfile until cancel;
+
+#10. resetlogs 옵션으로 DB 올리기
+
+SYS > alter database open resetlogs;
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+-- 시퀀스 초기화 된 상태
+
+
+※ cold backup 수행
