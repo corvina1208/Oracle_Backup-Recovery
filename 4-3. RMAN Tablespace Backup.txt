@@ -1,0 +1,14 @@
+■ RMAN Tablespace Backup
+
+#1 .ts5000 테이블 스페이스 생성하기
+
+SYS > create tablespace ts5000
+         datafile '/u01/app/oracle/oradata/jsj/ts5000.dbf' size 10m;
+
+#2. RMAN 을 이용해 ts5000 테이블 스페이스를 hot backup 하기
+
+$ rman target sys/oracle nocatalog
+
+RMAN > backup tablespace ts5000;
+RMAN > list backup of tablespace ts5000;
+
