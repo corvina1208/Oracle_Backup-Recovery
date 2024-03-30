@@ -1,0 +1,21 @@
+■ Redo log group 추가
+
+#1. redo log group 의 갯수 확인
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+#2. redo log group 추가하기
+
+SYS > alter database add logfile group 4
+         '/u01/app/oracle/oradata/jsj/redo04b.log' size 10m;
+
+#3. 그룹이 잘 만들어졌는지 확인
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+
