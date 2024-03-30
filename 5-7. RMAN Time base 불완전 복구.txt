@@ -1,0 +1,85 @@
+■ RMAN Time base 불완전 복구
+
+만약 금요일 12시에 scott 유저를 drop 했다면 11시 59분으로 DB를 되돌려야 하는데
+복구를 위해서는 과거에 백업받은 모든 datafile 들을 복원 후
+archive log file 을 하나씩 적용해서 복구를 하는데
+11시 59분까지 시간 기반 불완전 복구를 하면 된다.
+
+
+#1. RMAN 으로 full backup 수행
+#2. .bash_profile 에 nls_date_format 파라미터를 지정
+#3. 로그 스위치 일으키기 x 3
+#4. 체크포인트 일으키기
+#5. 현재 시간 확인
+#6. scott 유저 drop 하기
+#7. shutdown immediate
+#8. startup mount
+#9. RMAN 으로 불완전 복구
+#10. resetlogs로 DB 올리기
+#11. scott 으로 접속되는지 확인
+
+-- 구현
+
+#1. RMAN 으로 full backup 수행
+
+RMAN> backup database;
+
+#2. .bash_profile 에 nls_date_format 파라미터를 지정
+※ 오라클에서 날짜를 검색할 때 시분초가 기본값으로 보이도록 셋팅하기
+
+$ vi .bash_profile
+
+-- 하단에 추가
+NLS_LANG=american_america.we8iso8859p15
+NLS_DATE_FORMAT='RRRR/MM/DD:HH24:MI:SS'
+export NLS_LANG
+export NLS_DATE_FORMAT
+
+$ source .bash_profile
+
+#3. 로그 스위치 일으키기 x 3
+
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+
+#4. 체크포인트 일으키기
+
+SYS > alter system checkpoint;
+
+#5. 현재 시간 확인
+
+SYS > select sysdate from dual;
+2024/03/07:15:05:22
+
+#6. scott 유저 drop 하기
+
+SYS > drop user scott cascade;
+
+#7. SYS > shutdown immediate
+
+#8. SYS > startup mount
+
+#9. RMAN 으로 불완전 복구
+
+RMAN >
+run { set until time='2024/03/07:15:05:22';
+      restore database;
+      recover database; }
+
+※ [ run ] 배치형(batch) : 여러 개의 스크립트를 모아서 한 번에 수행
+
+#10. resetlogs로 DB 올리기
+
+SYS > alter database open resetlogs;
+
+#11. scott 으로 접속되는지 확인
+
+SYS > connect scott/tiger
+Connected.
+
+
+
+※ 불완전 복구 후 반드시 full backup 하기
+RMAN> backup database;
+
