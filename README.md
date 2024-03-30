@@ -48,7 +48,7 @@
 ### 6. Recovery catalog 를 통한 Backup&Recovery
 - 6-1. Recorery catalog 구성하기 : [CODE]
 - 6-2. Recorery catalog 를 별도의 DB 에 구성하기 : [CODE]
-- 6-3. Recorery catalog 에서 사용가능한 RMAN 명령어 : [CODE]
+- 6-3. Recorery catalog 를 통해 사용가능한 RMAN 명령어 : [CODE]
 - 6-4. Recorery catalog 에서 불완전 복구 : [CODE]
 - 6-5. 복구 관리자 사용하기 : [CODE]
 
