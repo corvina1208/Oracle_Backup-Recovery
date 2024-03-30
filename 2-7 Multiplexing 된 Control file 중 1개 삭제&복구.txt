@@ -1,0 +1,53 @@
+■ Multiplexing 된 Control file 중 1개 삭제&복구
+
+#1. control file 이 몇 개가 있는지 확인하기
+#2. shutdown abort 로 db 내리기
+#3. OS 에서 control01.ctl 삭제하기
+#4. startup
+#5. 다시 shutdown abort 로 내리기
+#6. OS 에서 control02.ctl 을 복사해 control01.ctl 로 붙여넣기
+#7. startup
+
+-- 구현
+
+#1. control file 이 몇 개가 있는지 확인하기
+
+SYS > select name from v$controlfile;
+-- 조회된 control file 중 1개 삭제 예정
+
+#2. shutdown abort 로 db 내리기
+
+SYS > shutdown abort
+
+#3. OS 에서 control01.ctl 삭제하기
+
+$ cd /u01/app/oracle/oradata/jsj
+$ rm control01.ctl
+
+#4. startup
+
+SYS > startup
+ORA-00205: error in identifying control file, check alert log for more info
+-- NOMOUNT 에서 더는 올라가지 않는다
+
+SYS > select status from v$instance;
+-- status: STARTED
+
+#5. 다시 shutdown abort 로 내리기
+
+SYS > shutdown abort
+
+#6. OS 에서 control02.ctl 을 복사해 control01.ctl 로 붙여넣기
+
+$ cp control02.ctl control01.ctl
+
+#7. startup
+
+SYS > startup
+SYS > select status from v$instance;
+-- status: OPEN
+
+SYS > select name from v$controlfile;
+-- 복구된 controlfile 확인
+
+
