@@ -1,0 +1,29 @@
+■ RMAN Cold backup
+
+#1. RMAN 으로 접속이 잘 되는지 확인하기
+
+$ rman target sys/oracle nocatalog
+
+#2. sys 유저로 접속해 DB를 shutdown immediate 로 내리기
+
+RMAN> exit;
+
+SYS > shutdown immediate
+
+#3. 다시 startup mount 로 DB 올리기
+
+SYS > startup mount
+
+#4. rman 으로 접속해 전체 데이터베이스 full backup 수행
+
+$ rman target sys/oracle nocatalog
+
+RMAN> backup database include current controlfile;
+Finished backup at 06-MAR-24
+
+RMAN> list backupset;
+/u01/app/oracle/flash_recovery_area/JSJ/backupset/2024_03_06/
+
+※ RMAN cold backup 은 mount 상태에서 백업하는 것이다.
+
+RMAN> alter database open;
