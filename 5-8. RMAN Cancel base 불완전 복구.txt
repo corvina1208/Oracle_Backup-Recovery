@@ -1,0 +1,94 @@
+■ RMAN Cancel base 불완전 복구
+
+current redo logfile 삭제됐을 때 불완전 복구를 시도하는 실습이다.
+월요일에 백업받은 모든 datafile들을 복원하고 archive log file을 적용해서 현재로 끌어오는데,
+current redo logfile을 적용 여부를 물어볼 때 cancel 해서 불완전 복구를 하는 것이다.
+
+
+#1. RMAN 으로 full backup 수행
+#2. 로그 스위치 일으키기 x 3
+#3. 체크포인트 일으키기
+#4. current redo log file 이 뭔지 확인하기
+#5. shutdown abort
+#6. OS 에서 current redo log file 삭제하기
+#7. startup
+#8. 에러가 난 원인 파악하기
+#9. RMAN 으로 접속
+#10. cancel base 불완전 복구 시도
+#11. resetlogs 로 DB 올리기
+#12. full backup 수행하기
+
+-- 구현
+
+#1. RMAN 으로 full backup 수행
+
+RMAN > backup database;
+
+#2. 로그 스위치 일으키기 x 3
+
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+
+#3. 체크포인트 일으키기
+
+SYS > alter system checkpoint;
+
+#4. current redo log file 이 뭔지 확인하기
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+-- group 1이 CURRENT 로 확인된다
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+/u01/app/oracle/oradata/jsj/redo01.log
+/u01/app/oracle/oradata/jsj/redo01b.log
+-- 위 두 개 파일 삭제 예정
+
+#5. SYS > shutdown abort
+
+#6. OS 에서 current redo log file 삭제하기
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls -l *.log
+
+$ rm redo01.log redo01b.log
+
+#7. SYS > startup
+ORA-00312: online log 1 thread 1: '/u01/app/oracle/oradata/jsj/redo01b.log’
+
+SYS > select group#, status, sequence#, thread# from v$log;
+-- thread 번호 1번으로 확인
+
+※ thread 번호란 어느 인스턴스의 redo log group 인지를 나타내는 번호다.
+RAC일 때 유용한 컬럼이고, 지금처럼 싱글 인스턴스일 때는 무조건 1번이다.
+
+#8. 에러가 난 원인 파악하기
+-- startup 시 에러메세지가 확인됐다. redo log file 이 없는 것이 파악됐다.
+
+#9. RMAN 으로 접속
+
+#10. cancel base 불완전 복구 시도
+
+RMAN >
+run { set until sequence 7 thread 1;
+      restore database;
+      recover database; }
+Finished recover at 2024/03/07:16:10:14
+
+#11. resetlogs 로 DB 올리기
+
+SYS > alter database open resetlogs;
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+-- 초기화 된 것 확인
+
+#12. full backup 수행하기
+
+RMAN > backup database;
+
+
+
