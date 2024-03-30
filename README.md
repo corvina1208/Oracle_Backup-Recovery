@@ -23,10 +23,10 @@
 - 2-14. Redo log Group 내 모든 member 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/2-14%20Redo%20log%20Group%20%EB%82%B4%20%EB%AA%A8%EB%93%A0%20member%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
 
 ### 3. 사용자 관리 불완전 복구
-- 3-1. Time base 불완전 복구 : [CODE]
-- 3-2. Cancel base 불완전 복구 : [CODE]
-- 3-3. 모든 Redo log file 삭제&복구 : [CODE]
-- 3-4. 모든 Date file, Control file, Redo log file 삭제&복구 : [CODE]
+- 3-1. Time base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-1.%20Time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
+- 3-2. Cancel base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-2.%20Cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
+- 3-3. 모든 Redo log file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-3.%20%EB%AA%A8%EB%93%A0%20Redo%20log%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
+- 3-4. 모든 Date file, Control file, Redo log file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-4.%20%EB%AA%A8%EB%93%A0%20Date%20file%2C%20Control%20file%2C%20Redo%20log%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
 
 ### 4. RMAN backup
 - 4-1. RMAN Cold backup : [CODE]
