@@ -1,0 +1,120 @@
+■ Time base 불완전 복구
+
+#1. cold backup 수행하기
+1-1) /home/oracle 밑에 coldbackup3 라는 폴더 생성하기
+1-2) data file과 control file과 redo log file의 위치 확인하기
+1-3) shutdown immediate 로 내리기
+1-4) 원본 data file, control file, redo log file 을 모두 /home/oracle/coldbackup3에 백업하기
+#2. DB를 startup 하고 로그 스위치 여러 번 일으키기
+#3. scott 유저에서 emp400 테이블 생성 후 로그 스위치 여러 번 일으키기
+#4. 현재 시간 확인
+#5. emp400을 drop 하기
+- - - emp400 이 drop되기 전으로 DB를 불완전 복구
+#6. DB를 정상 종료 하기
+#7. DB를 mount 상태로 올리기
+#8. 기존의 data file들 모두 지우기. (control file & redo log file은 그대로 두기)
+#9. 백업받은 모든 data file들을 복원하기
+#10. emp400 이 drop 되기 전으로 불완전 복구 수행
+#11. resetlogs 옵션으로 DB 올리기
+#12. scott 유저의 emp400 테이블 조회 시도
+
+-- 구현
+
+#1. cold backup 수행하기
+
+1-1) /home/oracle 밑에 coldbackup3 라는 폴더 생성하기
+
+$ cd
+$ mkdir coldbackup3
+
+1-2) data file과 control file과 redo log file의 위치 확인하기
+
+SYS > select file_id, file_name from dba_data_files
+         order by file_id;
+-- data file 위치 확인
+
+SYS > select name from v$controlfile;
+-- control file 위치 확인
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+-- redo log file 위치 확인
+
+1-3) shutdown immediate 로 내리기
+
+SYS > shutdown immediate
+
+1-4) 원본 data file, control file, redo log file 을 모두 /home/oracle/coldbackup3에 백업하기
+
+$ cd coldbackup3
+$ cp /u01/app/oracle/oradata/jsj/* .
+
+#2. DB를 startup 하고 로그 스위치 여러 번 일으키기
+
+SYS > startup
+
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+
+#3. scott 유저에서 emp400 테이블 생성 후 로그 스위치 여러 번 일으키기
+
+SCOTT > create table emp400
+             tablespace ts01
+             as
+             select * from emp;
+
+SCOTT > alter system switch logfile;
+SCOTT > alter system switch logfile;
+SCOTT > alter system switch logfile;
+
+SCOTT > alter system checkpoint;
+
+#4. 현재 시간 확인
+
+SCOTT > alter session set nls_date_format='RRRR/MM/DD:HH24:MI:SS';
+SCOTT > select sysdate from dual;
+-- 2024/03/05:15:22:56
+
+#5. emp400을 drop 하기
+
+SCOTT > drop table emp400 purge;
+
+- - - emp400 이 drop되기 전으로 DB를 불완전 복구
+
+#6. DB를 정상 종료 하기
+
+SYS > shutdown immediate
+
+#7. DB를 mount 상태로 올리기
+
+SYS > startup mount
+
+#8. 기존의 data file들 모두 지우기. (control file & redo log file은 그대로 두기)
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+$ rm *.dbf
+
+#9. 백업받은 모든 data file들을 복원하기
+
+$ cp /home/oracle/coldbackup3/*.dbf .
+
+#10. emp400 이 drop 되기 전으로 불완전 복구 수행
+
+SYS > set autorecovery on
+SYS > alter session set nls_date_format='RRRR/MM/DD:HH24:MI:SS';
+
+SYS > recover database until time '2024/03/05:15:22:56';
+-- 복구 시 archive log file 적용 여부 안 물어보고, 자동으로 다 적용되도록 하는 명령어
+
+#11. resetlogs 옵션으로 DB 올리기
+
+SYS > alter database open resetlogs;
+
+#12. scott 유저의 emp400 테이블 조회 시도
+
+SCOTT > select count(*) from emp400;
+-- 조회 성공
+
