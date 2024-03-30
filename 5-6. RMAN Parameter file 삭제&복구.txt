@@ -1,0 +1,76 @@
+※ parameter file 의 종류 2가지
+1. spfile : binary file
+2. pfile : text file
+
+$ORACLE_HOME/dbs 밑에 spfile, pfile 2개가 동시에 있다면
+오라클은 spfile 을 우선적으로 읽어 startup 시 인스턴스를 구성한다.
+
+parameter file 이 없으면 startup 시 shutdown 에서 어떤 단계로도 올라갈 수 없다.
+
+
+
+■ RMAN Parameter file 손상 시 복구
+
+#1. DB ID 확인하기
+#2. RMAN 에서 spfile 을 백업받기
+#3. shutdown abort
+#4. OS에서 spfile과 pfile을 둘 다 삭제하기
+#5. startup
+#6. RMAN 으로 접속해서 바로 nomount로 올리기
+#7. 백업받은 spfile 을 복원하기
+#8. startup force
+
+-- 구현
+
+#1. DB ID 확인하기
+
+SYS > select dbid from v$database;
+2601038722
+
+#2. RMAN 에서 spfile 을 백업받기
+
+$ rman target sys/oracle nocatalog
+
+RMAN> backup spfile;
+
+#3. RMAN > shutdown abort
+
+#4. OS에서 spfile과 pfile을 둘 다 삭제하기
+
+$ cd $ORACLE_HOME/dbs
+
+$ ls -l *jsj.ora
+-rw-r----- 1 oracle dba 3584  3월  7 12:08 spfilejsj.ora
+-- spfile 만 있는 상태로 확인된다
+
+$ rm spfilejsj.ora
+
+#5. SYS > startup
+ORA-01078: failure in processing system parameters
+LRM-00109: could not open parameter file '/u01/app/oracle/product/11.2.0/dbhome_1/dbs/initjsj.ora'
+
+#6. RMAN 으로 접속해서 바로 nomount로 올리기
+
+$ rman target sys/oracle nocatalog
+
+RMAN> set dbid=2601038722;
+executing command: SET DBID
+
+RMAN> startup nomount
+
+※ parameter file 없이 RMAN이 스스로 인스턴스를 nomount로 올렸다.
+nomount로 올린 이유는 shutdown 된 상태에서는 아무것도 할 수 없기 때문이다.
+
+#7. 백업받은 spfile 을 복원하기
+
+RMAN > restore spfile from autobackup;  --[시도 1]
+RMAN-06172: no AUTOBACKUP found or specified handle is not a valid copy or piece
+
+RMAN > list backup of spfile; --[시도 2]
+
+※ 시도 1, 2 모두 에러가 발생하므로, 직접 OS에 가서 spfile 백업본을 찾아야 한다.
+
+RMAN > restore spfile from '/u01/app/oracle/flash_recovery_area/JSJ/backupset/2024_03_07/o1_mf_nnsnf_TAG20240307T135231_lyll0h8b_.bkp';
+
+#8. RMAN > startup force
+
