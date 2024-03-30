@@ -1,0 +1,146 @@
+완전 복구의 경우는 recovery catalog 를 사용했을 때와 안 했을 때의 차이가 별로 없다.
+불완전 복구의 경우 차이가 있다.
+
+
+※ 불완전 복구의 종류 2가지 ?
+1. time base 불완전 복구 : 특정 시간대로 DB를 되돌리는 것
+2. cancel base 불완전 복구 : current redo log file 이 손상되기 전으로 되돌리는 것
+
+※ 장애 시나리오
+특정 시간으로 불완전 복구를 수행한다.
+불완전 복구를 하게 되면 resetlogs 로 open 을 해야하는데
+resetlogs 로 오픈할 때마다 새로운 incarnation 정보가 생성된다.
+새로운 incarnation 정보가 생성된다는 것은 불완전 복구 이전의 DB와
+불완전 복구를 한 이후의 DB를 구분해주기 위한 것이다.
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN> list incarnation of database;
+2       4       JSJ      2601038722       CURRENT 27568565    2024/03/08:14:30:48
+
+
+
+■ Recorery catalog 불완전 복구 : RMAN 을 사용해서 time base 불완전 복구하기
+
+#1. RMAN 으로 full backup 수행
+#2. .bash_profile 에 nls_date_format 파라미터를 지정해서
+오라클에서 날짜를 검색할 때 시분초가 기본값으로 보이게 셋팅
+#3. 로그 스위치 x 3 수행
+#4. 체크 포인트 수행
+#5. 현재 시간 확인
+#6. scott 유져를 drop 하기
+#7. shutdown immediate
+#8. startup mount
+#9. RMAN 으로 불완전 복구 수행
+#10. resetlogs 옵션으로 DB open
+
+-- 구현
+
+#1. RMAN 으로 full backup 수행
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN> report obsolete;
+RMAN> delete obsolete;
+RMAN> backup database;
+
+#2. .bash_profile 에 nls_date_format 파라미터를 지정해서
+오라클에서 날짜를 검색할 때 시분초가 기본값으로 보이게 셋팅
+
+$ cd
+$ vi .bash_profile
+-- 아래 내용 추가
+NLS_LANG=american_america.we8iso8859p15
+NLS_DATE_FORMAT='RRRR/MM/DD:HH24:MI:SS'
+export NLS_LANG
+export NLS_DATE_FORMAT
+
+$ source .bash_profile
+
+#3. 로그 스위치 x 3 수행
+
+jsj(SYS) > alter system switch logfile;
+jsj(SYS) > alter system switch logfile;
+jsj(SYS) > alter system switch logfile;
+
+#4. 체크 포인트 수행
+
+jsj(SYS) > alter system checkpoint;
+
+#5. 현재 시간 확인
+
+jsj(SYS) > select sysdate from dual;
+2024/03/11:14:12:55
+
+#6. scott 유져를 drop 하기
+
+jsj(SYS) > drop user scott cascade;
+
+#7. jsj(SYS) > shutdown immediate
+
+#8. jsj(SYS) > startup mount
+
+#9. RMAN 으로 불완전 복구 수행
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN>
+run { set until time='2024/03/11:14:12:55';
+      restore database;
+      recover database; }
+Finished recover at 2024/03/11:14:16:43
+
+#10. resetlogs 옵션으로 DB open
+
+jsj(SYS) > alter database open resetlogs;
+
+-- scott 유저로 접속 가능한지 확인
+
+jsj(SYS) > connect scott/tiger
+Connected.
+
+
+※ 불완전 복구 후 반드시 해야할 것?  full backup
+※ full backup 전에 list incarnation of database 먼저 수행하기
+RMAN> list incarnation of database;
+-- incarnation 번호가 바뀜
+RMAN> backup database include current controlfile;
+-- full backup
+
+※ recovery catalog DB를 쓸 때의 차이점:
+과거의 incarnation 번호일 때의 DB 상태로 불완전 복구를 수행할 수 있다.
+별도의 recovery catalog DB를 사용하기 때문에 가능한 일이다.
+
+
+
+■ Recorery catalog 불완전 복구 : 과거 incarnation 번호 때의 database 로 불완전 복구
+
+#1.  incarnation 번호 확인하기
+RMAN> list incarnation of database;
+2       4       JSJ      2601038722       PARENT
+
+#2. jsj(SYS) > shutdown immediate 
+
+#3. jsj(SYS) > startup mount
+
+#4. RMAN 에서 되돌아가고 싶은 incarnation 번호 세팅하기
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN> reset database to incarnation 4;
+database reset to incarnation 4
+
+#5. time base 불완전 복구 시도
+
+RMAN> restore database;
+
+RMAN> recover database until time '2024/03/11:14:12:55';
+Finished recover at 2024/03/11:14:31:19
+
+RMAN> alter database open resetlogs;
+database opened
+new incarnation of database registered in recovery catalog
+starting full resync of recovery catalog
+full resync complete
+
+
