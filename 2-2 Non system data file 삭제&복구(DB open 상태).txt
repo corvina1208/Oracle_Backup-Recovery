@@ -1,0 +1,82 @@
+■ Non system data file 삭제&복구(DB open 상태)
+
+#1. scott 유저에서 ts02 테이블 스페이스에 emp022 테이블을 생성
+
+SCOTT > create table emp022
+            tablespace ts02
+            as
+            select * from emp;
+
+#2. ts02 테이블 스페이스 hot backup
+
+SYS > alter tablespace ts02 begin backup;
+
+$ cp /u01/app/oracle/oradata/jsj/ts02.dbf /home/oracle/hotbackup/ts02b.dbf
+
+SYS > alter tablespace ts02 end backup;
+SYS > select * from v$backup;
+-- status: 전부 NOT ACTIVE 인지 확인
+
+#3. 로그 스위치 x 3
+
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+
+#4. 체크 포인트 일으키기
+
+SYS > alter system checkpoint;
+
+#5. OS 에서 ts02.dbf 삭제하기
+
+$ rm /u01/app/oracle/oradata/jsj/ts02.dbf
+
+SYS > alter system flush buffer_cache;
+SYS > alter system flush shared_pool;
+
+#6. emp022 테이블 조회해보기
+
+SCOTT > select * from emp022;
+ORA-01116: error in opening database file 7
+
+※ 위와 같은 상황이 발생할 경우 alert log file 을 열어봐야 한다.
+alert log file 은 tail -f 로 실시간 모니터링 해야 한다.
+
+$ cd /u01/app/oracle/diag/rdbms/jsj/jsj/trace
+$ vi alert*
+-- 대문자 G: 맨 아래로 이동
+ORA-01110: data file 7: '/u01/app/oracle/oradata/jsj/ts02.dbf'
+-- ts02.dbf 이 없어 장애가 났다는 것을 알 수 있다
+
+#7. ts02 테이블 스페이스를 offline 상태로 변경
+
+SYS > alter tablespace ts02 offline immediate;
+-- immediate 사용 이유 :
+immediate 를 안쓰면 해당 테이블 스페이스에 대해 checkpoint 를 일으키고 offline 시킨다.
+메모리에 있는 내용을 data file 에 반영하는게 checkpoint 인데 현재 data file 이 삭제되어 내려쓸 수 없다.
+때문에 immediate 를 써 checkpoint 없이 offline 시키겠다는 것이다.
+
+SYS > select tablespace_name, status from dba_tablespaces;
+-- status: OFFLINE 확인
+
+#8. 백업받은 ts02.dbf 파일을 복원하기
+
+$ cp /home/oracle/hotbackup/ts02b.dbf /u01/app/oracle/oradata/jsj/ts02.dbf
+
+#9. ts02 테이블 스페이스 복구하기
+
+SYS > recover tablespace ts02;
+
+#10. ts02 테이블 스페이스를 online 상태로 변경
+
+SYS > alter tablespace ts02 online;
+SYS > select tablespace_name, status from dba_tablespaces;
+-- status: ONLINE 확인
+
+#11. emp022 테이블 조회 시도
+SCOTT > select count(*) from emp022;
+-- 조회 성공
+
+
+※ non system datafile 의 경우 반드시 DB 를 내리지 않더라도 복구할 수 있다.
+테이블 스페이스를 offline 시키고 복원, 복구하면 된다.
