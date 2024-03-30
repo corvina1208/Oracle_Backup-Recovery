@@ -39,7 +39,7 @@
 - 5-3. RMAN 모든 Data file 삭제&복구 : [CODE]
 - 5-4. RMAN 모든 Control file 삭제&복구 : [CODE]
 - 5-5. RMAN 모든 Data file, Control file 삭제&복구 : [CODE]
-- 5-6. RMAN Parameter file 손상 시 복구 : [CODE]
+- 5-6. RMAN Parameter file 삭제&복구 : [CODE]
 - 5-7. RMAN Time base 불완전 복구 : [CODE]
 - 5-8. RMAN Cancel base 불완전 복구 : [CODE]
 - 5-9. RMAN 사용하지 않고 백업본 없을 때 복구 방법 : [CODE]
