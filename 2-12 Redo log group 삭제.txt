@@ -1,0 +1,22 @@
+■ Redo log group 삭제
+
+#1. 4번 그룹의 상태를 확인하고 current 나 active 이면 inactive로 바꾸기
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+SYS > alter system checkpoint;
+-- checkpoint 목적: 메모리에 있는 내용을 디스크에 내려쓰게 한다
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+-- 4번 그룹 status: INACTIVE
+
+#2. 4번 그룹 삭제하기
+
+SYS > alter database drop logfile group 4;
+
+-- 확인
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
