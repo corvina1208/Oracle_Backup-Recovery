@@ -1,0 +1,49 @@
+아래의 3개의 명령어만 알고 있으면 장애가 났을 때 쉽게 복구할 수 있다.
+
+1. 현재 장애 상황을 레포트 해라
+RMAN> list failure;
+
+2. 해결 방법을 알려달라
+RMAN> advise failure;
+
+3. advise 한대로 복구하라
+RMAN> repair failure;
+
+
+
+■ 6-5. 복구 관리자 사용하기
+
+#1. fullbackup 수행하기
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN> backup database;
+
+#2. datafile 을 4개 이상 rm으로 삭제하고 shutdown abort 하기
+
+jsj(SYS) > select file_id, file_name from dba_data_files order by file_id;
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ rm system01.dbf undotbs01.dbf temp01.dbf ts91.dbf
+
+jsj(SYS) > shutdown abort
+
+#3. jsj(SYS) > startup
+ORA-01157: cannot identify/lock data file 1 - see DBWR trace file
+ORA-01110: data file 1: '/u01/app/oracle/oradata/jsj/system01.dbf'
+
+#4. 복구 어드바이저를 이용해 복구하기
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN> list failure;
+RMAN> advise failure;
+RMAN> repair failure;
+
+#5. RMAN> alter database open
+
+
+
+※ 복구 어드바이저는 RAC 환경에서는 사용할 수 없다.
+불완전 복구는 사람이 직접 해야만 한다.
+
