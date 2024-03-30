@@ -8,7 +8,7 @@
 
 ### 2. 사용자 관리 완전 복구
 - 2-1. Non system data file 삭제&복구(DB close 상태) : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/2-1%20Non%20system%20data%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC(DB%20close%20%EC%83%81%ED%83%9C).txt)
-- 2-2. Non system data file 삭제&복구(DB open 상태) : [CODE]
+- 2-2. Non system data file 삭제&복구(DB open 상태) : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/2-2%20Non%20system%20data%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC(DB%20open%20%EC%83%81%ED%83%9C).txt)
 - 2-3. System data file 삭제&복구 : [CODE]
 - 2-4. 모든 Data file 삭제&복구 : [CODE]
 - 2-5. Control file 삭제&복구 : [CODE]
