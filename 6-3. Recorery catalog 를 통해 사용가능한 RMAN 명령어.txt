@@ -1,0 +1,236 @@
+※ 실습 환경 구성
+1. 인스턴스가 3개가 올라와야 한다. ( jsj, ASM, orcl )
+2. 리스너의 상태를 확인 : 리스너가 3개의 서비스를 다 인식하고 있는지
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+-- 위 명령어로 RMAN 연결되는지 확인하기
+
+※ RMAN 을 사용했을때의 장점 ?
+더 지능적으로 백업과 복구를 수행할 수 있다.
+
+
+■ Recorery catalog 를 통해 사용가능한 RMAN 명령어
+
+1. catalog :
+RMAN 으로 백업받지 않은 일반 백업본을 RMAN 으로 복구할 때 사용할 수 있도록 등록하는 명령어
+2. resync catalog :
+target DB 의 control file 내용을 recovery catalog 에게 알려 동기화하는 명령어
+3. change :
+recovery catalog 에 등록된 백업 정보를 지울 때 사용하는 명령어
+4. crosscheck :
+백업을 확실하게 받지 않으면 나중에 RMAN 으로 복원, 복구할 때
+해당 백업본이 없다며 에러가 나 복원, 복구 실패하는 경우를 예방하기 위한 명령어
+5. list : 
+백업본의 목록을 확인할 때 사용하는 명령어
+6. report :
+list 명령어보다 더 지능적인 결과를 보여주는 명령어
+(예 : 백업이 필요한 파일들이 뭔지 보여달라)
+
+
+
+■ 1. catalog 명령어 실습
+RMAN 으로 백업 받지 않은 일반 백업본을 RMAN 으로 복구할 때 사용할 수 있도록 하는 명령어
+
+#1. users01.dbf 를 사용자 관리 hot backup을 수행한다.
+
+jsj(SYS) > select file_id, file_name from dba_data_files order by file_id;
+jsj(SYS) > select tablespace_name, status, file_name from dba_data_files;
+
+jsj(SYS) > alter tablespace users begin backup;
+jsj(SYS) > select * from v$backup;
+-- users : ACTIVE
+
+$ cd
+$ mkdir hot_20240311
+$ cd /u01/app/oracle/oradata/jsj/
+$ cp users01.dbf /home/oracle/hot_20240311/users01.dbf
+
+jsj(SYS) > alter tablespace users end backup;
+jsj(SYS) > select * from v$backup;
+-- users : NOT ACTIVE
+
+#2. 1번에서 hot backup 받은 백업 파일을 RMAN이 인식할 수 있도록 등록해준다. (=catalog)
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN > catalog datafilecopy '/home/oracle/hot_20240311/users01.dbf';
+cataloged datafile copy
+datafile copy file name=/home/oracle/hot_20240311/users01.dbf RECID=1 STAMP=1163327126
+
+#3. RMAN이 잘 인식하고 있는지 확인한다.
+
+RMAN > list copy of datafile 4;
+
+
+
+■ 2. resync catalog 명령어 실습
+target DB 의 controlfile 의 내용을 recovery catalog 에게 알려주며 동기화하는 명령어
+
+#1. RMAN으로 접속한다.
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+#2. target DB 의 controlfile 과 recovery catalog 를 서로 동기화한다.
+
+RMAN > resync catalog;
+starting full resync of recovery catalog
+full resync complete
+
+※ 동기화가 필요한 때 ?
+target DB 의 구조가 변경되었을 때
+예) tablespace 생성, tablespace 삭제, datafile 추가
+※ 원래 동기화는 자동으로 일어나는데, 위의 명령어는 수동으로 등록해 준 것이다.
+
+
+
+■ 3. chage 명령어 실습
+recovery catalog 에 등록된 백업 정보를 지울 때 사용하는 명령어
+
+#1. datafile 4번에 대한 RMAN 백업 정보를 확인한다.
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN> list copy of datafile 4;
+-- 해당 정보를 RMAN 에서 지울 예정
+
+#2. 해당 백업 정보를 RMAN 에서 지운다.
+
+RMAN> change datafilecopy '/home/oracle/hot_20240311/users01.dbf' uncatalog;
+uncataloged datafile copy
+datafile copy file name=/home/oracle/hot_20240311/users01.dbf RECID=1 STAMP=1163327126
+Uncataloged 1 objects
+
+RMAN> list copy of datafile 4;
+pecification does not match any datafile copy in the repository
+
+※ 다시 /home/oracle/hot_20240311/users01.dbf 을 RMAN이 인식할 수 있도록 등록하기
+RMAN> catalog datafilecopy '/home/oracle/hot_20240311/users01.dbf';
+RMAN> list copy of datafile 4;
+
+
+
+■ 4. crosscheck 명령어 실습
+원본 파일과 RMAN 백업 파일을 서로 비교해서
+백업이 없는 파일이 있는지 확인하는 중요한 명령어
+
+#1. RMAN 으로 접속하기
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+#2. 원본 파일과 백업본과의 차이가 있는지 확인하기
+
+RMAN> report need backup;
+-- 여기서 무언가 보이면 백업이 필요한 파일이다
+
+#3. 백업본에 문제가 있는지 확인하기
+
+RMAN> crosscheck backupset;
+
+※ available : 차이 없는 것.
+전부 available 로 나와야 유효한 백업본이다.
+만약 RMAN이 알고 있는 백업 정보와 실제 물리적 정보에 차이가 발생하면 expired 로 나타난다.
+
+
+문제1. RMAN 모르게 OS에서 backupset 중 하나를 삭제해보기
+
+RMAN> list backupset of datafile 4;
+/u01/app/oracle/flash_recovery_area/JSJ/backupset/2024_03_08/o1_mf_nnndf_TAG20240308T144112_lyo97rb5_.bkp
+-- 위의 파일을 OS에서 삭제해보기
+
+$ cd /u01/app/oracle/flash_recovery_area/JSJ/backupset/2024_03_08
+$ ls
+$ rm o1_mf_nnndf_TAG20240308T144112_lyo97rb5_.bkp
+
+$ rman target sys/oracle_4U@jsj catalog rc_user/rc_user@orcl
+
+RMAN> crosscheck backupset;
+RMAN> delete expired backupset;
+-- yes 입력
+
+※ RMAN으로 백업 받을 때 백업 유형 2가지 ?
+1. backupset
+2. image copy
+
+지금까지의 실습들은 전부 backupset 으로 백업받은 파일들에 대한 실습이었다.
+
+
+
+■ 5. list 명령어 실습
+백업본의 목록을 확인할 때 사용하는 명령어
+
+#1. user tablespace 의 백업본이 있는지 확인
+
+RMAN> list backup of tablespace users;
+specification does not match any backup in the repository
+-- 백업본 없음
+
+#2. datafile 5 번의 백업본이 있는지 확인
+
+RMAN> list backup of datafile 5;
+specification does not match any backup in the repository
+-- 백업본 없음
+
+#3. 둘 다 백업본이 없다고 나오면 백업을 받아야 한다.
+
+-- 백업 수행
+
+RMAN> backup tablespace users;
+RMAN> backup datafile 5;
+
+-- 백업본 존재 여부 재확인
+
+MAN> list backup of tablespace users;
+RMAN> list backup of datafile 5;
+
+
+
+■ 6. report 명령어 실습
+list 명령어보다 더 지능적인 결과를 보여주는 명령어
+
+#1. 현재 백업이 필요한 파일이 무엇인가?
+
+RMAN> report need backup; 
+-- 결과 : 없음 (결과 있다면 백업 수행)
+
+#2. 공간 절약을 위해서 지워도 되는 백업 파일들을 보여달라
+
+RMAN> report obsolete;
+RMAN retention policy is set to redundancy 1
+-- "하나의 원본 파일에 대해서, 중복된 백업본이 없도록 1개의 백업본만 두겠다"
+-- 2로 세팅 시 중복된 백업본 2개로 유지하게 된다
+
+RMAN> delete obsolete;
+-- yes 입력
+
+#3. target DB의 물리적 구조를 보여달라
+
+RMAN> report schema;
+
+
+문제1. 중복된 백업본을 2개씩 유지하도록 설정하기
+
+RMAN> configure retention policy to redundancy 2;
+RMAN> show all;
+
+
+문제2. users 테이블 스페이스를 3번 백업 후, 지워도 되는 백업 파일 리스트에 나오는지 조회하기
+※ 1회씩 시도
+
+RMAN> backup tablespace users;
+RMAN> report obsolete;
+-- 없음
+
+RMAN> backup tablespace users;
+RMAN> report obsolete;
+-- autobackup본 확인됨
+
+RMAN> backup tablespace users;
+RMAN> report obsolete;
+-- backupset 확인됨
+
+
+
+※ 다시 1개의 백업본만 유지되도록 변경
+RMAN> configure retention policy to redundancy 1;
+RMAN> show all
+
