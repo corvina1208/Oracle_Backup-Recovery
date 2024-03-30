@@ -45,7 +45,6 @@ $ cp /u01/app/oracle/oradata/jsj/example01.dbf /home/oracle/hotbackup/example01.
 $ cd /home/oracle/hotbackup
 $ ls
 
-
 #4. 테이블 스페이스들을 일반 모드로 변경
 
 SYS> alter tablespace 테이블 스페이스 이름 end backup;
