@@ -1,0 +1,65 @@
+■  사용자 관리 Hot backup
+
+- 순서:
+#1. 테이블 스페이스들을 모두 백업 모드로 변경
+#2. 백업 모드로 변경되었는지 확인
+#3. os에서 data file들을 백업
+#4. 테이블 스페이스들을 일반 모드로 변경
+#5. 일반 모드로 변경되었는지 확인
+
+- 구현:
+#1. 테이블 스페이스들을 모두 백업 모드로 변경
+
+SYS> select tablespace_name, file_name from dba_data_files;
+SYS> select * from v$backup;
+
+SYS> alter tablespace system begin backup;
+        alter tablespace undotbs1 begin backup;
+        alter tablespace sysaux begin backup;
+        alter tablespace example begin backup;
+        alter tablespace users begin backup;
+
+#2. 백업 모드로 변경되었는지 확인
+
+SYS> select * from v$backup;
+
+#3. os에서 data file들을 백업
+
+SYS> select file_id, file_name
+         from dba_data_files
+         order by file_id;
+/u01/app/oracle/oradata/jsj/users01.dbf
+/u01/app/oracle/oradata/jsj/undotbs01.dbf
+/u01/app/oracle/oradata/jsj/sysaux01.dbf
+/u01/app/oracle/oradata/jsj/system01.dbf
+/u01/app/oracle/oradata/jsj/example01.dbf
+
+$ cd
+$ mkdir hotbackup
+$ cp /u01/app/oracle/oradata/jsj/users01.dbf /home/oracle/hotbackup/users01.dbf
+$ cp /u01/app/oracle/oradata/jsj/undotbs01.dbf /home/oracle/hotbackup/undotbs01.dbf
+$ cp /u01/app/oracle/oradata/jsj/sysaux01.dbf /home/oracle/hotbackup/sysaux01.dbf
+$ cp /u01/app/oracle/oradata/jsj/system01.dbf /home/oracle/hotbackup/system01.dbf
+$ cp /u01/app/oracle/oradata/jsj/example01.dbf /home/oracle/hotbackup/example01.dbf
+
+$ cd /home/oracle/hotbackup
+$ ls
+
+
+#4. 테이블 스페이스들을 일반 모드로 변경
+
+SYS> alter tablespace 테이블 스페이스 이름 end backup;
+
+SYS> select * from v$backup;
+SYS> alter tablespace system end backup;
+        alter tablespace undotbs1 end backup;
+        alter tablespace sysaux end backup;
+        alter tablespace example end backup;
+        alter tablespace users end backup;
+
+#5. 일반 모드로 변경되었는지 확인
+
+SYS> select * from v$backup;
+
+
+
