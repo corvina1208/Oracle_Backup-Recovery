@@ -1,0 +1,62 @@
+■ Redo log Group 내 모든 member 삭제&복구
+
+#1. 현재 redo log group 상태 확인
+#2. inactive 인 redo log group 하나 선택해서, 해당 그룹의 멤버를 모두 삭제하기
+#3. 로그 스위치 여러 번 일으키기
+#4. DB가 shutdown 되었다면 startup mount
+#5. 문제가 되고 있는 redo log group 삭제
+#6. DB open
+
+-- 구현
+
+#1. 현재 redo log group 상태 확인
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+#2. inactive 인 redo log group 하나 선택해서, 해당 그룹의 멤버를 모두 삭제하기
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ rm redo03.log redo03b.log
+$ ls -l *.log
+
+#3. 로그 스위치 여러 번 일으키기
+
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+-- DB가 멈춘다
+
+#4. DB가 shutdown 되었다면 startup mount
+-- open 안 되기 때문
+
+#5. 문제가 되고 있는 redo log group 삭제
+
+SYS > alter database drop logfile group 3;
+ORA-00350: log 3 of instance jsj (thread 1) needs to be archived
+-- archiving 안 되어 있어 명령어 실패
+-- controlfile 자체에서 지워버리는 명령어
+
+SYS > alter database clear unarchived logfile group 3;
+-- 그룹 삭제&추가 한 번에 수행하는 명령어
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+#6. DB open
+
+SYS > alter database open;
+
+
+
+■ current 만 제외하고 전부 archiving 시키는 명령어
+
+SYS > alter system archive log all;
+
+SYS > alter system checkpoint;
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
