@@ -1,0 +1,89 @@
+■ RMAN 모든 Data file 삭제&복구
+
+#1. data file 들의 위치 확인하기
+#2. control file 들의 위치 확인하기
+#3. redo log file 들의 위치 확인하기
+#4. RMAN 으로 접속해, RMAN이 DB의 구조를 알고 있는지 확인하기
+#5. RMAN 으로 full backup 을 수행
+#6. shutdown abort
+#7. 모든 data file 삭제
+#8. startup 시도
+#9. 복구해야할 파일들이 무엇인지 확인
+#10. 전체 data file 복원
+#11. 전체 data file 복구
+#12. alter database open;
+
+-- 구현
+
+#1. data file 들의 위치 확인하기
+
+SYS > select file_id, file_name from dba_data_files
+         order by file_id;
+
+#2. control file 들의 위치 확인하기
+
+SYS > select name from v$controlfile;
+
+#3. redo log file 들의 위치 확인하기
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+
+#4. RMAN 으로 접속해, RMAN이 DB의 구조를 알고 있는지 확인하기
+
+$ rman target sys/oracle nocatalog
+
+RMAN > report schema;
+
+#5. RMAN 으로 full backup 을 수행
+
+RMAN > backup database include current controlfile;
+
+※ DB 전체 백업이기 때문에, 위 명령어를 수행하기 전에
+fast recovery area 의 공간이 부족하지 않은지 먼저 확인하고 실행해야 한다.
+(공간 부족하면 백업 중 실패)
+※ fast recovery area 공간 확인
+SELECT 
+    NAME, 
+    SPACE_LIMIT / 1024 / 1024 AS "Space Limit (MB)", 
+    SPACE_USED / 1024 / 1024 AS "Space Used (MB)", 
+    SPACE_RECLAIMABLE / 1024 / 1024 AS "Space Reclaimable (MB)", 
+    NUMBER_OF_FILES AS "Files"
+FROM 
+    V$RECOVERY_FILE_DEST;
+
+RMAN > list backup;
+
+#6. SYS > shutdown abort
+
+#7. 모든 data file 삭제
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+$ rm *.dbf
+
+#8. startup 시도
+
+SYS > startup
+ORA-01157: cannot identify/lock data file 1 - see DBWR trace file
+ORA-01110: data file 1: '/u01/app/oracle/oradata/jsj/system01.dbf'
+-- mount 상태에서 더는 올라가지 않는다
+
+#9. 복구해야할 파일들이 무엇인지 확인
+
+SYS > select * from v$recover_file;
+
+#10. 전체 data file 복원
+
+$ rman target sys/oracle nocatalog
+
+RMAN > list failure;
+RMAN > restore database;
+
+#11. 전체 data file 복구
+
+RMAN > recover database;
+
+#12. RMAN > alter database open;
+
