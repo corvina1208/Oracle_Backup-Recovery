@@ -1,0 +1,36 @@
+■ Redo log group member 삭제
+
+#1. redo log group 의 상태를 확인한다.
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+
+#2. inactive 상태의 redo log group 의 멤버를 하나 drop 한다.
+
+SYS > alter database drop logfile member
+         '/u01/app/oracle/oradata/jsj/redo01b.log';
+SYS > alter database drop logfile member
+         '/u01/app/oracle/oradata/jsj/redo03b.log';
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+
+#3. 나머지 redo log group의 멤버도 다 drop 해, 그룹당 멤버를 1개씩만 유지한다.
+-- ※ 로그 스위치와 체크 포인트를 일으켜 상태를 inactive로 만들어 놓고 작업하기
+
+SYS > alter system switch logfile;
+SYS > alter system checkpoint;
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+SYS > alter database drop logfile member '/u01/app/oracle/oradata/jsj/redo02b.log';
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
