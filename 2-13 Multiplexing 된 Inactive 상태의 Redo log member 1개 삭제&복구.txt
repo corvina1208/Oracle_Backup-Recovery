@@ -1,0 +1,96 @@
+■ Multiplexing 된 Inactive 상태의 Redo log member 1개 삭제&복구
+
+#1. 현재 있는 그룹들에 멤버를 2개씩 유지하게 하기
+#2. 1번 그룹만 current 이고, 2번과 3번은 inactive 상태가 되게 하기
+#3. 3번 그룹의 멤버 중 하나를 삭제하기
+#4. 로그 스위치를 수동으로 여러 번 일으키는게 가능한지 확인
+
+-- 구현
+
+#1. 현재 있는 그룹들에 멤버를 2개씩 유지하게 하기
+
+$ cd /u01/app/oracle/oradata/jsj
+$ ls -l *.log
+
+$ rm redo01b.log
+$ rm redo02b.log
+$ rm redo03b.log
+$ rm redo04b.log
+$ rm redo05b.log
+
+※ 주의:
+redo log group 의 멤버를 확인해 결과에 없는 logfile 을 OS에서 지워야 한다.
+기존에 사용중이던 멤버를 지우면 안 된다.
+
+$ ls -l *.log
+
+SYS > alter database add logfile member
+         '/u01/app/oracle/oradata/jsj/redo01b.log' to group 1;
+SYS > alter database add logfile member
+         '/u01/app/oracle/oradata/jsj/redo02b.log' to group 2;
+SYS > alter database add logfile member
+         '/u01/app/oracle/oradata/jsj/redo03b.log' to group 3;
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+-- 그룹당 멤버가 2개씩 있는지 확인
+
+#2. 1번 그룹만 current 이고, 2번과 3번은 inactive 상태가 되게 하기
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+SYS > alter system switch logfile;
+SYS > alter system checkpoint;
+
+#3. 3번 그룹의 멤버 중 하나를 삭제하기
+
+SYS > select group#, member
+          from v$logfile
+          order by group#;
+-- 경로 확인
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ rm redo03b.log
+
+※ 오라클 몰래 지운 것이기 때문에 오라클은 모른다.
+※ 아는 시점: LGWR 가 redo03b.log 를 사용하려 할 때
+※ 오라클이 알게 되면 DB가 멈추는지 4번 작업을 통해 확인해보기
+
+#4. 로그 스위치를 수동으로 여러 번 일으키는게 가능한지 확인
+
+SYS > alter system switch logfile;
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+-- 여러 번 반복
+
+※ redo03.log 하나가 남아있기 때문에 정상적으로 운영된다.
+다만 alert log file 에는 redo03b.log 없다고 계속해서 메세지를 남긴다.
+
+
+■ alert log file 확인
+
+SYS > show parameter background_dump_dest
+-- alert log file 위치 확인
+
+$ cd /u01/app/oracle/diag/rdbms/jsj/jsj/trace
+$ ls -l alert*
+-rw-r----- 1 oracle dba 527074  3월  5 12:01 alert_jsj.log
+
+$ vi alert_jsj.log
+-- 대문자 G: 맨 아래로 이동
+
+
+■ redo03b.log 완전히 삭제 후 다시 추가
+
+-- 삭제 : 오라클이 기억하는 기존 멤버 삭제
+
+SYS > alter database drop logfile member
+         '/u01/app/oracle/oradata/jsj/redo03b.log';
+
+-- 다시 추가
+
+SYS > alter database add logfile member
+         '/u01/app/oracle/oradata/jsj/redo03b.log' to group 3;
