@@ -1,0 +1,75 @@
+■ 모든 Redo log file 삭제&복구
+
+cancel base 불완전 복구를 수행한다.
+(current 까지 삭제되었기 때문)
+
+#1. cold backup 수행
+#2. 로그 파일 상태 확인
+#3. shutdown abort
+#4. 모든 리두 로그 파일 삭제하기
+#5. startup
+#6. 만약 그냥 shutdown 됐다면 startup mount 하기
+#7. current 리두 로그 그룹의 시퀀스 번호 확인
+#8. shutdown abort
+#9. 원본 datafile 들 다 지우고 coldbackup 본에서 모든 datafile 들을 복원
+#10. startup mount
+#11. set autorecovery off
+#12. recover database until cancel;
+#13. alter database open resetlogs;
+#14. 리두 로그 파일의 상태 확인
+#15. 다시 cold backup 수행
+
+-- 구현
+
+#1. cold backup 수행
+
+#2. redo log group 상태 확인
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+#3. SYS > shutdown abort
+
+#4. 모든 redo log file 삭제하기
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+
+$ rm *.log
+$ ls
+
+#5. SYS > startup
+-- mount 상태에서 더는 올라가지 않는다
+
+#6. 만약 그냥 shutdown 됐다면 startup mount 하기
+
+#7. current redo log group 의 시퀀스 번호 확인
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+#8. SYS > shutdown abort
+
+#9. 원본 datafile 들 다 지우고 coldbackup 본에서 모든 datafile 들을 복원
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ rm *.dbf
+
+$ cp /home/oracle/coldbackup6/*.dbf .
+
+#10. SYS > startup mount
+
+#11. SYS > set autorecovery off
+
+#12. SYS > recover database until cancel;
+-- current sequence 번호 물어볼 때 "cancel" 입력
+
+#13. SYS > alter database open resetlogs;
+
+#14. redo log group 상태 확인
+
+SYS > select group#, status, sequence#, members, archived
+          from v$log;
+
+#15. 다시 cold backup 수행
+
