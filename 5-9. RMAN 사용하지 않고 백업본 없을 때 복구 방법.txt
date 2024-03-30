@@ -1,0 +1,106 @@
+■ RMAN 사용하지 않고 백업본 없을 때 복구 방법
+
+(=사용자 관리)
+
+백업을 받지 않은 data file 이 손상되었을 때 복구 방법은
+먼저 빈 파일을 하나 만들고 여기에 아카이브 로그 파일을 적용해서 복구를 하면 된다.
+빈 파일명은 기존 파일명과 다르게 지어준다.
+
+#1. ts07 이라는 테이블 스페이스를 생성하기
+#2. scott 유저로 접속해 ts07 테이블 스페이스에 emp07 테이블을 생성
+#3. emp07 테이블에 데이터를 입력하고 로그스위치(x3) 일으키기
+#4. ts07 테이블 스페이스를 백업하지 말고 바로 shutdown immediate 하기
+#5. OS에서 ts07.dbf 를 삭제하기
+#6. startup
+#7. 복구해야할 파일 조회
+#8. ts07.dbf를 위한 빈 파일 생성하기
+#9. 복구해야할 파일 조회
+#10. 일단 DB를 open 시키기 위해, 문제가 된 해당 data file을 offline 시키기
+#11. DB open
+#12. ts07 테이블 스페이스를 recover 하기
+#13. 복구된 data file을 online 시키기
+#14. scott 유저에서 emp07 테이블이 잘 조회되는지 확인하기
+
+-- 구현
+
+#1. ts07 이라는 테이블 스페이스를 생성하기
+
+SYS > create tablespace ts07 datafile '/u01/app/oracle/oradata/jsj/ts07.dbf' size 10m;
+
+#2. scott 유저로 접속해 ts07 테이블 스페이스에 emp07 테이블을 생성
+
+SYS > conn scott/tiger
+
+SCOTT > create table emp07
+            ( empno  number(10),
+              ename  varchar2(20) )
+              tablespace ts07;
+
+#3. emp07 테이블에 데이터를 입력하고 로그스위치(x3) 일으키기
+
+SCOTT > insert  into  emp07  values(1111,'aaa' );
+SCOTT > commit;
+
+SCOTT > alter system switch logfile;
+SCOTT > alter system switch logfile;
+SCOTT > alter system switch logfile;
+
+#4. ts07 테이블 스페이스를 백업하지 말고 바로 shutdown immediate 하기
+
+SCOTT > conn / as sysdba
+
+SYS > shutdown immediate
+
+#5. OS에서 ts07.dbf 를 삭제하기
+※ 백업본이 없는데 삭제하는 것
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls -l ts07.dbf
+-rw-r----- 1 oracle dba 10493952  3월  8 10:01 ts07.dbf
+
+$ rm ts07.dbf
+
+#6. SYS > startup
+ORA-01157: cannot identify/lock data file 14 - see DBWR trace file
+ORA-01110: data file 14: '/u01/app/oracle/oradata/jsj/ts07.dbf'
+-- mount 상태에서 더는 올라가지 않는다
+
+#7. 복구해야할 파일 조회
+
+SYS > select * from v$recover_file; 
+
+#8. ts07.dbf를 위한 빈 파일 생성하기
+
+SYS > alter database create datafile '/u01/app/oracle/oradata/jsj/ts07.dbf'
+as '/u01/app/oracle/oradata/jsj/ts07b.dbf';
+
+#9. 복구해야할 파일 조회
+
+SYS > select * from v$recover_file;
+
+#10. 일단 DB를 open 시키기 위해, 문제가 된 해당 data file을 offline 시키기
+
+SYS > alter database datafile '/u01/app/oracle/oradata/jsj/ts07b.dbf' offline;
+
+#11. DB open
+
+SYS > alter database open;
+
+#12. ts07 테이블 스페이스를 recover 하기
+
+SYS > recover tablespace ts07;
+
+#13. 복구된 data file을 online 시키기
+
+SYS > alter database datafile '/u01/app/oracle/oradata/jsj/ts07b.dbf' online;
+
+#14. scott 유저에서 emp07 테이블이 잘 조회되는지 확인하기
+
+SYS > conn scott/tiger
+
+SCOTT > select * from emp07;
+-- 조회 성공
+
+
+
+
