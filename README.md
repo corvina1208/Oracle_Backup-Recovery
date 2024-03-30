@@ -29,9 +29,9 @@
 - 3-4. 모든 Date file, Control file, Redo log file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-4.%20%EB%AA%A8%EB%93%A0%20Date%20file%2C%20Control%20file%2C%20Redo%20log%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
 
 ### 4. RMAN backup
-- 4-1. RMAN Cold backup : [CODE]
-- 4-2. RMAN Hot backup : [CODE]
-- 4-3. RMAN Tablespace Backup : [CODE]
+- 4-1. RMAN Cold backup : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/4-1.%20RMAN%20Cold%20backup.txt)
+- 4-2. RMAN Hot backup : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/4-2.%20RMAN%20Hot%20backup.txt)
+- 4-3. RMAN Tablespace Backup : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/4-3.%20RMAN%20Tablespace%20Backup.txt)
 
 ### 5. RMAN recovery
 - 5-1. RMAN Non system data file 삭제&복구 : [CODE]
