@@ -1,0 +1,109 @@
+■ data file 의 종류 2가지?
+
+1) system data file
+- 오라클 system 을 운영하기 위해 반드시 필요한 파일들
+- 예) system01.dbf, sysaux01.dbf, undotbs01.dbf
+- 이 파일들이 손상되면 db가 운영 안 되고 강제로 shutdown된다.
+   복구할 때 db가 open 된 상태에서 복구할 수 없고 mount 상태에서 복구해야 한다.
+
+2) non system data file
+- 일반 사용자 데이터가 저장된 data file
+- 예) users01.dbf, example01.dbf, ts01.dbf
+- 이 파일들이 손상되면 db가 내려가지는 않으나 해당 테이블들을 select 할 수가 없다.
+- db 가 mount / open 상태일 때 둘 다 복구 가능하다.
+
+- 복원(restore) : 백업 받은 파일을 가져오는 것
+- 복구(recover) : 백업 받은 파일에 아카이브 로그를 적용하는 것
+
+
+
+■ Non system data file 삭제&복구(DB close 상태)
+
+#1. DB가 Archive mode 인지 확인
+
+SYS > archive log list
+
+#2. ts02 테이블 스페이스 생성
+
+SYS > create tablespace ts02 datafile '/u01/app/oracle/oradata/jsj/ts02.dbf' size 10m;
+
+#3. ts02 테이블 스페이스의 data file을 hot backup 받기
+
+SYS > alter tablespace ts02 begin backup;
+SYS > select * from v$backup;
+-- status: ACTIVE 확인
+
+$ cp /u01/app/oracle/oradata/jsj/ts02.dbf /home/oracle/hotbackup/ts02.dbf
+$ cd /home/oracle/hotbackup
+$ ls -l
+-- ts02.dbf 확인
+
+SYS > alter tablespace ts02 end backup;
+SYS > select * from v$backup;
+-- status: NOT ACTIVE 확인
+
+#4. scott 유저에서 ts02 테이블 스페이스에 emp05 테이블 생성
+
+SCOTT > create table emp05
+             tablespace ts02
+             as
+             select * from emp;
+
+#5. 로그 스위치 x 3
+
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+SYS > alter system switch logfile;
+
+#6. OS에서 ts02.dbf 파일을 삭제
+
+SYS > select file_id, file_name from dba_data_files
+         order by file_id;
+-- ts02.dbf 경로 확인: /u01/app/oracle/oradata/jsj/ts02.dbf
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls
+$ rm ts02.dbf
+
+SCOTT > select count(*) from emp05;
+-- 조회 성공 : 아직 조회 가능한 이유는 메모리에 emp05가 있기 때문이다.
+-- 메모리를 지우는 명령어를 다음과 같이 수행해 본다.
+
+SYS > alter system flush buffer_cache;
+SYS > alter system flush shared_pool;
+
+SCOTT > select count(*) from emp05;
+-- 조회 실패
+
+#7. DB를 shutdown abort & startup
+
+SYS > shutdown abort
+SYS > startup
+ORA-01157: cannot identify/lock data file 7 - see DBWR trace file
+ORA-01110: data file 7: '/u01/app/oracle/oradata/jsj/ts02.dbf'
+
+※ 복구하는 방법
+1) 손상된 data file 번호를 확인
+2) 손상된 data file 이름을 확인
+
+#8. mount 상태에서 DB가 안 올라가는 것을 확인
+
+SYS > select status from v$instance;
+-- status: MOUNTED
+
+#9. 백업받은 ts02.dbf 파일을 복원하기
+
+$ cd hotbackup
+$ cp ts02.dbf /u01/app/oracle/oradata/jsj/ts02.dbf
+
+#10. 복원한 ts02.dbf 파일에 archive log file을 적용해서 복구하기
+
+SYS > recover datafile 7
+
+#11. DB open
+
+SYS > alter database open;
+
+#12. emp05 테이블이 잘 조회되는지 확인
+
+SYS > select count(*) from emp05;
