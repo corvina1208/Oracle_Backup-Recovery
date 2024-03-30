@@ -1,0 +1,21 @@
+■ RMAN Hot backup
+
+사용자 관리 hot backup 은 begin backup 을 일일이 수행해 백업 모드로 변경해준 뒤 백업을 해야 했다.
+그리고 끝나면 다시 end backup 을 해줘야 했다.
+RMAN은 이런 작업이 필요 없다.
+
+
+#1. DB가 오픈 상태인지 확인
+
+SYS > select status
+          from v$instance;
+
+#2. RMAN으로 접속
+
+$ rman target sys/oracle nocatalog
+
+#3. 전체 백업
+
+RMAN> backup database include current controlfile;
+
+
