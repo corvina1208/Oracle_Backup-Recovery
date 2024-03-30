@@ -1,0 +1,117 @@
+오라클에서는 RMAN을 쓸 때 Recovery catalog를 함께 사용할 것을 권장하고 있다.
+
+
+■ RMAN 으로 백업한 백업 정보가 저장되는 곳
+
+1. control file
+2. recovery catalog (별도의 DB 생성해서 구성)
+
+control file 에 백업 정보가 저장되게 되는데,
+만약 controlfile이 깨진다면 복구를 할 수 없는 상황이 된다.
+
+
+■ Recorery catalog 구성하기
+
+1. RMAN 백업/복구 스크립트를 저장할 수 있다.
+2. control file 보다 더 많은 정보를 저장할 수 있다.
+3. control file 에 저장된 기록보다 이전의 복구에 필요한 백업 정보를 기록하고 있다.
+(= control file 을 복구 못 하게 되면 RMAN 으로 백업받았던 기록정보를 다 잊어버리게 된다)
+4. backup 할 때 keep forever 를 사용해 중요 백업본을 영구히 저장하게 할 수 있다.
+
+
+■ 용어 설명: Target DB vs Recovery Catalog DB
+
+- target DB(jsj) : 백업의 대상이 되는 DB
+- Recovery Catalog DB(rcdb tablespace) : 백업 정보가 저장되는 DB
+
+※ 오해하면 안 되는 사실 ?
+RC (Recovery Catalog DB) 에 백업 정보가 저장되는 것이지, 백업 파일이 저장되는건 아니다.
+백업 파일은 fast recovery area 에 저장된다.
+
+SYS > show parameter recovery
+-- RMAN 백업본은 여기에 있다
+
+
+#1. recovery catalog 테이블 스페이스 생성
+#2. recovery catalog 를 관리할 유저를 생성하고, 권한 부여
+#3. recovery catalog 를 생성
+#4. recovery catalog 에 target DB 를 등록
+
+-- 구현
+
+#1. recovery catalog 테이블 스페이스 생성
+
+SYS > create tablespace rc_ts datafile '/u01/app/oracle/oradata/jsj/rc_ts01.dbf' size 30m;
+
+#2. recovery catalog 를 관리할 유저를 생성하고, 권한 부여
+
+SYS > create user rc_user
+         identified by rc_user
+         default tablespace rc_ts;
+
+SYS > grant recovery_catalog_owner to rc_user;
+-- recovery_catalog_owner : 복구 관리 할 때 필요한 모든 권한들이 들어있는 role
+
+SYS > grant unlimited tablespace to rc_user;
+
+#3. recovery catalog 를 생성
+
+$ rman catalog rc_user/rc_user
+
+RMAN> create catalog tablespace rc_ts;
+
+#4. recovery catalog 에 target DB 를 등록
+
+RMAN> exit;
+
+$ rman target sys/oracle catalog rc_user/rc_user
+-- target DB & rc DB 동시에 접속
+
+RMAN> register database;
+-- recovery catalog에 target database 를 등록해 주는 것
+
+RMAN> report schema;
+-- target DB에 대한 정보를 한 눈에 볼 수 있다
+
+RMAN> exit;
+
+$ rman target sys/oracle catalog rc_user/rc_user
+
+RMAN> backup database;
+
+
+
+
+■ 문제1. 전체 백업을 하는 스크립트를 생성하기
+
+$ rman target sys/oracle catalog rc_user/rc_user
+
+RMAN > create script whole_backup { backup database include current controlfile; }
+
+RMAN > print script whole_backup;
+-- 생성한 스크립트 조회
+
+RMAN > run { execute script whole_backup; }
+-- 생성한 스크립트 실행
+
+
+■ 문제2. whole_backup 스크립트 지우기
+
+RMAN > delete script whole_backup;
+
+
+■ 문제3. control file 을 백업하는 명령어로 backup_controlfile 이라는 스크립트를 생성하기
+※ 명령어 : backup current controlfile;
+
+RMAN > create script backup_controlfile { backup current controlfile; }
+
+
+■ 문제4. 위에서 만든 스크립트를 rc_user로 접속해서 조회해보기
+
+RMAN> exit
+
+$ sqlplus rc_user/rc_user
+
+RC_USER > select script_name from rc_stored_script;
+backup_controlfile
+
