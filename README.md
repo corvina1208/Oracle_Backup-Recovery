@@ -23,7 +23,7 @@
 - 2-14. Redo log Group 내 모든 member 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/2-14%20Redo%20log%20Group%20%EB%82%B4%20%EB%AA%A8%EB%93%A0%20member%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
 
 ### 3. 사용자 관리 불완전 복구
-- 완전 복구 vs 불완전 복구 : [설명]
+- 완전 복구 vs 불완전 복구 : [설명](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3.%20%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC%20vs%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
 - 3-1. Time base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-1.%20Time%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
 - 3-2. Cancel base 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-2.%20Cancel%20base%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
 - 3-3. 모든 Redo log file 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/3-3.%20%EB%AA%A8%EB%93%A0%20Redo%20log%20file%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
@@ -47,9 +47,8 @@
 - 5-10 RMAN 백업본 없을 때 복구 방법 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/5-10%20RMAN%20%EB%B0%B1%EC%97%85%EB%B3%B8%20%EC%97%86%EC%9D%84%20%EB%95%8C%20%EB%B3%B5%EA%B5%AC%20%EB%B0%A9%EB%B2%95.txt)
 
 ### 6. Recovery catalog 를 통한 Backup&Recovery
-- 6-1. Recorery catalog 구성하기 : [CODE]
-- 6-2. Recorery catalog 를 별도의 DB 에 구성하기 : [CODE]
-- 6-3. Recorery catalog 를 통해 사용가능한 RMAN 명령어 : [CODE]
-- 6-4. Recorery catalog 에서 불완전 복구 : [CODE]
-- 6-5. 복구 관리자 사용하기 : [CODE]
-
+- 6-1. Recorery catalog 구성하기 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/6-1.%20Recorery%20catalog%20%EA%B5%AC%EC%84%B1%ED%95%98%EA%B8%B0.txt)
+- 6-2. Recorery catalog 를 별도의 DB 에 구성하기 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/6-2.%20Recorery%20catalog%20%EB%A5%BC%20%EB%B3%84%EB%8F%84%EC%9D%98%20DB%20%EC%97%90%20%EA%B5%AC%EC%84%B1%ED%95%98%EA%B8%B0.txt)
+- 6-3. Recorery catalog 를 통해 사용가능한 RMAN 명령어 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/6-3.%20Recorery%20catalog%20%EB%A5%BC%20%ED%86%B5%ED%95%B4%20%EC%82%AC%EC%9A%A9%EA%B0%80%EB%8A%A5%ED%95%9C%20RMAN%20%EB%AA%85%EB%A0%B9%EC%96%B4.txt)
+- 6-4. Recorery catalog 에서 불완전 복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/6-4.%20Recorery%20catalog%20%EB%B6%88%EC%99%84%EC%A0%84%20%EB%B3%B5%EA%B5%AC.txt)
+- 6-5. 복구 관리자 사용하기 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/6-5.%20%EB%B3%B5%EA%B5%AC%20%EA%B4%80%EB%A6%AC%EC%9E%90%20%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0.txt)
