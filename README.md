@@ -34,7 +34,7 @@
 - 4-3. RMAN Tablespace Backup : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/4-3.%20RMAN%20Tablespace%20Backup.txt)
 
 ### 5. RMAN recovery
-- 5-1. RMAN Non system data file 삭제&복구 : [CODE]
+- 5-1. RMAN Non system data file 삭제&복구(DB open 상태) : [CODE]
 - 5-2. RMAN System data file 삭제&복구 : [CODE]
 - 5-3. RMAN 모든 Data file 삭제&복구 : [CODE]
 - 5-4. RMAN 모든 Control file 삭제&복구 : [CODE]
