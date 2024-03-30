@@ -1,0 +1,96 @@
+■ RMAN 백업본 없을 때 복구 방법
+
+#1. ts91 테이블 스페이스 생성
+#2. scott 유저에서 ts91 테이블 스페이스에 emp91 테이블 생성하기
+#3. emp91 테이블에 데이터 입력 후 로그스위치 일으키기 (3번 반복)
+#4. shutdown abort
+#5. OS에서 ts91.dbf 삭제하기
+#6. startup
+#7. 복구해야 할 파일이 뭔지 조회하기
+#8. 문제가 되는 데이터 파일을 offline 시키기
+#9. DB open
+#10. RMAN 으로 접속하기
+#11. 문제가 되는 datafile 번호를 가지고 restore
+#12. 문제가 되는 datafile 번호를 가지고 recover
+#13. 복구한 datafile 을 online 시키기
+#14. emp91 테이블이 잘 조회되는지 확인하기
+
+-- 구현
+
+#1. ts91 테이블 스페이스 생성
+
+SYS > create tablespace ts91 datafile '/u01/app/oracle/oradata/jsj/ts91.dbf' size 5m;
+
+#2. scott 유저에서 ts91 테이블 스페이스에 emp91 테이블 생성하기
+
+SYS > conn scott/tiger
+
+SCOTT > create table emp91
+            ( empno   number(10),
+              ename   varchar2(10) )
+              tablespace ts91;
+
+#3. emp91 테이블에 데이터 입력 후 로그스위치 일으키기 (3번 반복)
+
+SCOTT > insert into emp91 values(1111,'aaa');
+SCOTT > alter system switch logfile;
+-- 세트로 3회 반복
+
+SCOTT > alter system checkpoint;
+
+#4. SYS > shutdown abort
+
+#5. OS에서 ts91.dbf 삭제하기
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ ls -l ts91.dbf
+-rw-r----- 1 oracle dba 5251072  3월  8 10:53 ts91.dbf
+
+$ rm ts91.dbf
+
+#6. SYS > startup
+ORA-01157: cannot identify/lock data file 18 - see DBWR trace file
+ORA-01110: data file 18: '/u01/app/oracle/oradata/jsj/ts91.dbf'
+-- mount 상태에서 더는 올라가지 않는다
+
+#7. 복구해야 할 파일이 뭔지 조회하기
+
+SYS > select * from v$recover_file;
+
+또는
+
+SYS > select file#, name from v$datafile where file#=18;
+
+#8. 문제가 되는 데이터 파일을 offline 시키기
+
+SYS > alter database datafile 18 offline;
+
+#9. DB open
+
+SYS > alter database open;
+
+#10. RMAN 으로 접속하기
+
+#11. 문제가 되는 datafile 번호를 가지고 restore
+※ RMAN이 빈 파일도 알아서 생성해준다.
+
+RMAN> restore datafile 18;
+
+#12. 문제가 되는 datafile 번호를 가지고 recover
+
+RMAN> recover datafile 18;
+
+#13. 복구한 datafile 을 online 시키기
+
+SYS > alter database datafile 18 online;
+
+#14. emp91 테이블이 잘 조회되는지 확인하기
+
+SYS > conn scott/tiger
+
+SCOTT > select count(*) from emp91;
+-- 조회 성공
+
+
+※ RMAN을 이용하면 백업본이 있든 없든 다 복구가 된다.
+다만 반드시 "archive mode"에서만 가능하다.
