@@ -1,0 +1,105 @@
+■ data file 의 종류 2가지?
+
+1) system data file
+- 오라클 system 을 운영하기 위해 반드시 필요한 파일들
+- 예) system01.dbf, sysaux01.dbf, undotbs01.dbf
+- 이 파일들이 손상되면 db가 운영 안 되고 강제로 shutdown된다.
+   복구할 때 db가 open 된 상태에서 복구할 수 없고 mount 상태에서 복구해야 한다.
+
+2) non system data file
+- 일반 사용자 데이터가 저장된 data file
+- 예) users01.dbf, example01.dbf, ts01.dbf
+- 이 파일들이 손상되면 db가 내려가지는 않으나 해당 테이블들을 select 할 수가 없다.
+- db 가 mount / open 상태일 때 둘 다 복구 가능하다.
+
+
+■ System data file 삭제&복구
+
+#1. cold backup 수행 : /home/oracle 밑에 coldbackup2 라는 폴더를 만들고 수행하기
+
+SYS > shutdown immediate
+
+$ cd
+$ mkdir coldbackup2
+$ cp /u01/app/oracle/oradata/jsj/* /home/oracle/coldbackup2/
+
+SYS > startup
+
+#2. hot backup 수행 : /home/oracle 밑에 hotbackup3 라는 폴더를 만들고 수행하기
+
+SYS > select 'alter tablespace ' || tablespace_name || ' begin backup;'
+          from dba_data_files;
+
+alter tablespace TS01 begin backup;
+alter tablespace EXAMPLE begin backup;
+alter tablespace USERS begin backup;
+alter tablespace UNDOTBS1 begin backup;
+alter tablespace SYSAUX begin backup;
+alter tablespace SYSTEM begin backup;
+alter tablespace TS02 begin backup;
+alter tablespace TS03 begin backup;
+
+SYS > select * from v$backup;
+-- status: ACTIVE 확인
+
+$ cd
+$ mkdir hotbackup3
+
+SYS > select 'cp ' || file_name || ' /home/oracle/hotbackup3/'
+          from dba_data_files;
+
+$ cp /u01/app/oracle/oradata/jsj/ts01.dbf /home/oracle/hotbackup3/
+$ cp /u01/app/oracle/oradata/jsj/example01.dbf /home/oracle/hotbackup3/
+$ cp /u01/app/oracle/oradata/jsj/users01.dbf /home/oracle/hotbackup3/
+$ cp /u01/app/oracle/oradata/jsj/undotbs01.dbf /home/oracle/hotbackup3/
+$ cp /u01/app/oracle/oradata/jsj/sysaux01.dbf /home/oracle/hotbackup3/
+$ cp /u01/app/oracle/oradata/jsj/system01.dbf /home/oracle/hotbackup3/
+$ cp /u01/app/oracle/oradata/jsj/ts02.dbf /home/oracle/hotbackup3/
+$ cp /u01/app/oracle/oradata/jsj/ts03.dbf /home/oracle/hotbackup3/
+
+SYS > select 'alter tablespace ' || tablespace_name || ' end backup;'
+          from dba_data_files;
+
+alter tablespace TS01 end backup;
+alter tablespace EXAMPLE end backup;
+alter tablespace USERS end backup;
+alter tablespace UNDOTBS1 end backup;
+alter tablespace SYSAUX end backup;
+alter tablespace SYSTEM end backup;
+alter tablespace TS02 end backup;
+alter tablespace TS03 end backup;
+
+SYS > select * from v$backup;
+-- status: NOT ACTIVE 확인
+
+#3. /u01/app/oracle/oradata/jsj/system01.dbf 삭제
+
+$ rm /u01/app/oracle/oradata/jsj/system01.dbf
+
+#4. DB 내렸다 올리기
+
+SYS > startup force
+ORA-01110: data file 1: '/u01/app/oracle/oradata/jsj/system01.dbf’
+
+#5. mount 에서 멈추게 되면 복구해야할 파일이 무엇인지 확인해보기
+
+SYS > select status from v$instance;
+-- status: MOUNTED
+
+$ cd /u01/app/oracle/diag/rdbms/jsj/jsj/trace
+$ vi alert*
+ORA-01110: data file 1: '/u01/app/oracle/oradata/jsj/system01.dbf’
+
+#6. 백업받은 system01.dbf 를 복원
+
+$ cd
+$ cp /home/oracle/hotbackup3/system01.dbf /u01/app/oracle/oradata/jsj/system01.dbf
+
+#7. 복원한 파일을 복구한다
+
+SYS > recover datafile 1;
+
+#8. DB open
+
+SYS > alter database open;
+
