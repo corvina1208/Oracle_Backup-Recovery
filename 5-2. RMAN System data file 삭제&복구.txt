@@ -1,0 +1,47 @@
+■ RMAN System data file 삭제&복구
+
+※ System data file 이란 ?
+database 를 운영하기 위해 필요한 data 들이 있는 파일들
+만약 이 파일들이 손상되면 mount 상태에서 복구 할 수 밖에 없다.
+
+#1. shutdown abort
+#2. OS에서 system01.dbf 와 sysaux01.dbf 를 삭제
+#3. startup
+#4. select * from v$recover_file;
+#5. RMAN 으로 접속하기
+#6. 문제가 되는 datafile 복원
+#7. 문제가 되는 datafile 복구
+#8. DB open
+
+-- 구현
+
+#1. SYS > shutdown abort
+
+#2. OS에서 system01.dbf 와 sysaux01.dbf 를 삭제
+
+$ cd /u01/app/oracle/oradata/jsj/
+$ rm system01.dbf sysaux01.dbf
+
+#3. startup
+ORA-01157: cannot identify/lock data file 1 - see DBWR trace file
+ORA-01110: data file 1: '/u01/app/oracle/oradata/jsj/system01.dbf'
+-- mount 상태에서 더는 올라오지 않는다
+
+#4. SYS > select * from v$recover_file;
+-- 문제가 되는 file 번호 확인: 1, 2
+
+#5. RMAN 으로 접속하기
+
+$ rman target sys/oracle nocatalog
+
+#6. 문제가 되는 datafile 복원
+
+RMAN> restore datafile 1,2;
+
+#7. 문제가 되는 datafile 복구
+
+RMAN> recover datafile 1,2;
+
+#8. DB open
+
+RMAN> alter database open;
