@@ -23,20 +23,32 @@
 - 2-14. Redo log Group 내 모든 member 삭제&복구 : [CODE](https://github.com/corvina1208/Oracle_Backup-Recovery/blob/main/2-14%20Redo%20log%20Group%20%EB%82%B4%20%EB%AA%A8%EB%93%A0%20member%20%EC%82%AD%EC%A0%9C%26%EB%B3%B5%EA%B5%AC.txt)
 
 ### 3. 사용자 관리 불완전 복구
--
--
--
--
+- 3-1. Time base 불완전 복구 : [CODE]
+- 3-2. Cancel base 불완전 복구 : [CODE]
+- 3-3. 모든 Redo log file 삭제&복구 : [CODE]
+- 3-4. 모든 Date file, Control file, Redo log file 삭제&복구 : [CODE]
 
 ### 4. RMAN backup
--
--
--
+- 4-1. RMAN Cold backup : [CODE]
+- 4-2. RMAN Hot backup : [CODE]
+- 4-3. RMAN Tablespace Backup : [CODE]
 
 ### 5. RMAN recovery
+- 5-1. RMAN Non system data file 삭제&복구 : [CODE]
+- 5-2. RMAN System data file 삭제&복구 : [CODE]
+- 5-3. RMAN 모든 Data file 삭제&복구 : [CODE]
+- 5-4. RMAN 모든 Control file 삭제&복구 : [CODE]
+- 5-5. RMAN 모든 Data file, Control file 삭제&복구 : [CODE]
+- 5-6. RMAN Parameter file 손상 시 복구 : [CODE]
+- 5-7. RMAN Time base 불완전 복구 : [CODE]
+- 5-8. RMAN Cancel base 불완전 복구 : [CODE]
+- 5-9. RMAN 사용하지 않고 백업본 없을 때 복구 방법 : [CODE]
+- 5-10 RMAN 백업본 없을 때 복구 방법 : [CODE]
 
+### 6. Recovery catalog 를 통한 Backup&Recovery
+- 6-1. Recorery catalog 구성하기 : [CODE]
+- 6-2. Recorery catalog 를 별도의 DB 에 구성하기 : [CODE]
+- 6-3. Recorery catalog 에서 사용가능한 RMAN 명령어 : [CODE]
+- 6-4. Recorery catalog 에서 불완전 복구 : [CODE]
+- 6-5. 복구 관리자 사용하기 : [CODE]
 
-
-
-
-  
